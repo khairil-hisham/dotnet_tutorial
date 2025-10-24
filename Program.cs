@@ -1,7 +1,12 @@
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors();
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello from .NET backend!");
-app.MapGet("/user/{id}", (int id) => new { Id = id, Name = $"User{id}" });
+app.UseCors(x => x
+    .AllowAnyOrigin()
+    .AllowAnyHeader()
+    .AllowAnyMethod());
 
+app.MapGet("/", () => "Hello from .NET!");
 app.Run();
