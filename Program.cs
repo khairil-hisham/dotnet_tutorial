@@ -1,25 +1,47 @@
-using System.Linq;
+using AuthApi.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddCors();
 
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=users.db"));
+
+// JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+            )
+        };
+    });
+
+
+builder.Services.AddControllers();
 var app = builder.Build();
 
-app.UseCors(x => x
-    .AllowAnyOrigin()
-    .AllowAnyHeader()
-    .AllowAnyMethod());
+// Middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/", () => "Hello from .NET!");
 
-app.MapGet("/sum", (int number) =>
-{
-    int sum = number
-        .ToString()
-        .Where(char.IsDigit)
-        .Sum(c => c - '0');
-
-    return Results.Json(new { number, sum });
-});
-
+app.MapControllers();
 app.Run();
+
+
+
+
+
+
+
